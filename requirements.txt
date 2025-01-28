@@ -1,0 +1,7 @@
+selenium
+pandas
+google-cloud-storage
+Flask
+numpy
+openpyxl
+google-cloud-secret-manager
