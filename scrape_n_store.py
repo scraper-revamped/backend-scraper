@@ -23,9 +23,10 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--log-level=1")
 driver = Chrome(options=chrome_options)
+driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
 
-driver.set_page_load_timeout(180)  # Increase the timeout for page load
-driver.set_script_timeout(180)
+# driver.set_page_load_timeout(180)  # Increase the timeout for page load
+# driver.set_script_timeout(180)
 
 def post_process_results(term_tenders):
     logging.info("got etimad website successfully!!!")

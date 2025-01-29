@@ -6,3 +6,5 @@ numpy
 openpyxl
 google-cloud-secret-manager
 undetected-chromedriver
+streamlit
+python-dotenv

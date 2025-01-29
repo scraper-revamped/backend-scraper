@@ -52,4 +52,4 @@ COPY . .
 EXPOSE 8080
 
 # Command to run the application
-CMD ["python", "test_main.py"]
+CMD ["streamlit", "run", "test_main.py", "--server.port=8080", "--server.address=0.0.0.0"]

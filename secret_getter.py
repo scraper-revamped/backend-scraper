@@ -29,7 +29,8 @@ from google.oauth2 import service_account
 from google.auth import default
 import os 
 import logging
-
+from dotenv import load_dotenv
+load_dotenv()
 logging.basicConfig(level=logging.INFO)
 def get_service_account_credentials():
     try:
