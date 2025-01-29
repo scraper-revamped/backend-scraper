@@ -4,7 +4,7 @@ import os
 from secret_getter import get_service_account_credentials
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 def delete_existing_files(bucket_name):
     try:

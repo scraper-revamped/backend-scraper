@@ -6,7 +6,7 @@ import logging
 app = Flask(__name__)
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/', methods=['GET', 'POST'])
 def run_scraper():

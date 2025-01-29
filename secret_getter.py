@@ -30,7 +30,7 @@ from google.auth import default
 import os 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 def get_service_account_credentials():
     try:
         # Retrieve the secret from the environment variable

@@ -5,3 +5,4 @@ Flask
 numpy
 openpyxl
 google-cloud-secret-manager
+undetected-chromedriver

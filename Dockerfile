@@ -4,7 +4,18 @@ FROM python:3.11
 # Set the working directory
 WORKDIR /app
 
-# Install required packages for Chrome and other dependencies
+# # Install required packages for Chrome and other dependencies
+# RUN apt-get update && apt-get install -y \
+#     wget \
+#     unzip \
+#     libnss3 \
+#     libxss1 \
+#     libappindicator3-1 \
+#     libatk-bridge2.0-0 \
+#     libgtk-3-0 \
+#     libgbm-dev \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -14,9 +25,10 @@ RUN apt-get update && apt-get install -y \
     libatk-bridge2.0-0 \
     libgtk-3-0 \
     libgbm-dev \
+    chromium \
+    chromium-driver \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
 
 # Add Google's official GPG key
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - 
@@ -31,8 +43,6 @@ RUN apt-get update && apt-get install -y google-chrome-stable
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# COPY scraper2-443707-19ac9e067729.json /app/service-account.json
-# ENV GOOGLE_APPLICATION_CREDENTIALS=/app/service-account.json
 
 # Copy the application code into the container
 COPY . .
