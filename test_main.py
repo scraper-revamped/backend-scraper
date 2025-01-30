@@ -43,5 +43,5 @@ st.title("Web Scraping App")
 st.write("This app scrapes tenders from the Etimad website.")
 
 # Automatically run the scraper when the app is loaded
-# if __name__ == '__main__':
-run_scraper()
+if __name__ == '__main__':
+    run_scraper()
