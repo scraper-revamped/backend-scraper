@@ -1,10 +1,10 @@
-selenium
+selenium>=4.10.0
 pandas
 google-cloud-storage
 Flask
 numpy
 openpyxl
 google-cloud-secret-manager
-undetected-chromedriver
 streamlit
 python-dotenv
+webdriver-manager

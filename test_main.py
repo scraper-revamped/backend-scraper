@@ -23,25 +23,46 @@
 #     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
 
 
+# import streamlit as st
+# from scrape_n_store import setup_search
+# import logging
+
+# # Configure logging
+# logging.basicConfig(level=logging.INFO)
+
+# def run_scraper():
+#     st.write("Scraper started.")
+#     try:
+#         setup_search("الاتصالات وتقنية المعلومات")
+#         st.write("Scraping completed successfully.")
+#     except Exception as e:
+#         st.error(f"An error occurred: {str(e)}")
+
+# # Streamlit UI
+# st.title("Web Scraping App")
+# st.write("This app scrapes tenders from the Etimad website.")
+
+# # Automatically run the scraper when the app is loaded
+# if __name__ == '__main__':
+#     run_scraper()
+
 import streamlit as st
 from scrape_n_store import setup_search
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 
 def run_scraper():
-    st.write("Scraper started.")
-    try:
-        setup_search("الاتصالات وتقنية المعلومات")
-        st.write("Scraping completed successfully.")
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+    with st.spinner('Scraping in progress...'):
+        try:
+            setup_search("الاتصالات وتقنية المعلومات")
+            st.success("Scraping completed successfully!")
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+            logging.error(f"Scraping error: {str(e)}", exc_info=True)
 
-# Streamlit UI
 st.title("Web Scraping App")
 st.write("This app scrapes tenders from the Etimad website.")
 
-# Automatically run the scraper when the app is loaded
 if __name__ == '__main__':
     run_scraper()
