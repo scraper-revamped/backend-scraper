@@ -130,7 +130,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create a wrapper script to start Xvfb and the application
-RUN echo '#!/bin/bash\nXvfb :99 -screen 0 1024x768x16 &\nstreamlit run test_main.py --server.port=8080 --server.address=0.0.0.0' > /app/start.sh
+RUN echo '#!/bin/bash\nXvfb :99 -screen 0 1024x768x16 &\npython app.py' > /app/start.sh
 RUN chmod +x /app/start.sh
 
 EXPOSE 8080
