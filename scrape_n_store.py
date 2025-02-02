@@ -144,6 +144,7 @@ def setup_search(main_activityy):
     # logging.info("Website loaded successfully")
     try:
         print("getting etimad website..")
+        logging.info("getting website!!!")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         print("got etimad website successfully!!!")
@@ -187,6 +188,7 @@ def setup_search(main_activityy):
         
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+        logging.info(f"An error occurred: {str(e)}")
     finally:
         driver.quit()
 
