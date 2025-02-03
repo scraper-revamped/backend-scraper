@@ -37,7 +37,7 @@ def post_process_results(term_tenders):
         records.append(record)
 
     df = pd.DataFrame(records)
-    df.to_csv('filtered_csv', index=False, encoding='utf-8-sig')
+    df.to_csv('filtered.csv', index=False, encoding='utf-8-sig')
     df.columns = [
          "publish_date", "competition_type", "subject", "stakeholder", 
         "details", "main_activity", "time_left", "reference_number", "questions_deadline", 
@@ -247,6 +247,10 @@ def run_scraper():
         logging.error(f"Error: {e}")
         return f"Error occurred: {e}", 500
     
-def main(request):
-    return run_scraper()
+# def main(request):
+#     return run_scraper()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
 
