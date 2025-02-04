@@ -1,30 +1,60 @@
-from flask import Flask, request
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import pandas as pd
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import pandas as pd
 import os
+from xpath import *
+#from utils_consts import *
 import time
-from google.cloud import storage
+from save_to_bucket import save_to_storage
 import logging
-from google.cloud import secretmanager
-import json
-from google.oauth2 import service_account
-from google.auth import default
+from selenium.webdriver.chrome.options import Options
 
-app = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
-chrome_options = webdriver.ChromeOptions()
+
+logging.basicConfig(level=logging.INFO)
+
+# chrome_options = ChromeOptions()
+chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--log-level=1")
+# #driver = webdriver.Chrome(options=chrome_options)
+# # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
+
+# # driver.set_page_load_timeout(300)  # Increase the timeout for page load
+# # driver.set_script_timeout(300)
+
+
+# def setup_chrome_driver():
+#     chrome_options = Options()
+#     chrome_options.add_argument('--headless')
+#     chrome_options.add_argument('--no-sandbox')
+#     chrome_options.add_argument('--disable-dev-shm-usage')
+#     chrome_options.add_argument('--disable-gpu')
+#     chrome_options.add_argument('--disable-software-rasterizer')
+#     chrome_options.add_argument('--disable-extensions')
+#     chrome_options.add_argument('--single-process')
+#     chrome_options.add_argument('--remote-debugging-port=9222')
+#     chrome_options.add_argument('--window-size=1920x1080')
+#     chrome_options.binary_location = os.getenv('CHROME_BIN', '/usr/bin/chromium')
+
+#     service = webdriver.ChromeService(
+#         executable_path=os.getenv('CHROMEDRIVER_PATH')
+#     )
+    
+#     driver = webdriver.Chrome(service=service, options=chrome_options)
+#     driver.set_page_load_timeout(30)
+#     driver.implicitly_wait(10)
+    
+#     return driver
 
 def post_process_results(term_tenders):
-    logging.info("post processing results")
+    logging.info("got etimad website successfully!!!")
     if not term_tenders:
         print("No results found for the specified main activity.")
         return
@@ -37,7 +67,7 @@ def post_process_results(term_tenders):
         records.append(record)
 
     df = pd.DataFrame(records)
-    df.to_csv('filtered.csv', index=False, encoding='utf-8-sig')
+    df.to_csv('filtered_csv', index=False, encoding='utf-8-sig')
     df.columns = [
          "publish_date", "competition_type", "subject", "stakeholder", 
         "details", "main_activity", "time_left", "reference_number", "questions_deadline", 
@@ -130,15 +160,25 @@ def start_parsing(term_tenders, driver):
 
     return
 def setup_search(main_activityy):
+    logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
     driver.maximize_window()
+    # logging.info("Driver initialized, navigating to website...")
+    # # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
+    # # logging.info("Website loaded successfully")
     try:
-        print("getting etimad website..")
+        # print("getting etimad website..")
+        # logging.info("getting website!!!")
+        # website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
+        # driver.get(website_url)
+        # print("got etimad website successfully!!!")
+        # logging.info("got etimad website successfully!!!")
+        # driver = setup_chrome_driver()
+        logging.info("Driver initialized, navigating to website...")
+        
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
-        print("got etimad website successfully!!!")
         logging.info("got etimad website successfully!!!")
-
         
         # expand search
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
@@ -176,81 +216,11 @@ def setup_search(main_activityy):
         start_parsing(term_tenders, driver)
         
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        logging.error(f"An error occurred: {str(e)}")
+        raise
     finally:
-        driver.quit()
-
-
-def get_service_account_credentials():
-    try:
-        # Retrieve the secret from the environment variable
-        secret_payload = os.getenv("SERVICE_ACCOUNT_JSON")
-        if not secret_payload:
-            raise ValueError("Service account JSON not found in environment variable.")
-
-        # Load the credentials
-        credentials_dict = json.loads(secret_payload)
-        credentials = service_account.Credentials.from_service_account_info(credentials_dict)
-        return credentials
-    except Exception as e:
-        logging.error(f"Error retrieving or parsing the secret: {e}")
-        raise
-
-
-def delete_existing_files(bucket_name):
-    try:
-        logging.info(f"Attempting to delete files in bucket: {bucket_name}")
-        creds = get_service_account_credentials()
-        client = storage.Client(credentials=creds)
-        bucket = client.bucket(bucket_name)
-        blobs = bucket.list_blobs()
-        for blob in blobs:
-            logging.info(f"Deleting file: {blob.name}")
-            blob.delete()
-    except Exception as e:
-        logging.error(f"Error deleting files: {e}")
-
-
-def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
-    creds = get_service_account_credentials()
-    client = storage.Client(credentials=creds)
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(destination_blob_name)
-    blob.upload_from_filename(source_file_name)
-    logging.info(f"Uploaded {source_file_name} to {destination_blob_name}")
-
-
-def save_to_storage(df, term, username):
-    logging.info(f"Saving data for term: {term}")
-    try:
-        today_date = pd.to_datetime('today').strftime('%Y-%m-%d-%h')
-        file_name = f"tenders_{term}_{today_date}_{username}.xlsx"
-        df.to_excel(file_name, index=False)
-        logging.info(f"File saved locally: {file_name}")
-
-        bucket_name = "tenders-excel-files"
-        delete_existing_files(bucket_name)
-        upload_to_gcs(bucket_name, file_name, f"{term}/{file_name}")
-        os.remove(file_name)
-    except Exception as e:
-        logging.error(f"Error in save_to_storage: {str(e)}")
-        raise
-
-
-@app.route('/', methods=['GET', 'POST'])
-def run_scraper():
-    logging.info("Scraper started")
-    try:
-        setup_search("الاتصالات وتقنية المعلومات")
-        return "Scraping completed successfully.", 200
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        return f"Error occurred: {e}", 500
-    
-
+        if driver:
+            driver.quit()
 
 if __name__ == "__main__":
-    # port = int(os.environ.get("PORT", 8080))
-    # app.run(host="0.0.0.0", port=port)
-    app.run(debug=True)
-
+    setup_search("الاتصالات وتقنية المعلومات")

@@ -98,11 +98,104 @@
 # CMD ["streamlit", "run", "test_main.py", "--server.port=8080", "--server.address=0.0.0.0"]
 
 
-FROM python:3.11-slim
+# FROM python:3.11-slim
 
+# WORKDIR /app
+
+# # Install Chrome and dependencies
+# RUN apt-get update && apt-get install -y \
+#     wget \
+#     gnupg \
+#     unzip \
+#     chromium \
+#     chromium-driver \
+#     libnss3 \
+#     libgconf-2-4 \
+#     libfontconfig1 \
+#     xvfb \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Set environment variables
+# ENV PYTHONUNBUFFERED=1
+# ENV CHROME_BIN=/usr/bin/chromium
+# ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+# ENV DISPLAY=:99
+
+# # Copy and install requirements
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# # Copy application code
+# COPY . .
+
+# # Create a wrapper script to start Xvfb and the application
+# RUN echo '#!/bin/bash\nXvfb :99 -screen 0 1024x768x16 &\npython main.py' > /app/start.sh
+# RUN chmod +x /app/start.sh
+
+# EXPOSE 8080
+
+# CMD ["/app/start.sh"]
+
+
+# # Use an official Python runtime as a parent image
+# FROM python:3.9-slim
+
+# # Set the working directory in the container
+# WORKDIR /app
+
+# # Install system dependencies for Chrome/Chromium and other libraries
+# RUN apt-get update && apt-get install -y \
+#     wget \
+#     gnupg \
+#     unzip \
+#     chromium \
+#     chromium-driver \
+#     libnss3 \
+#     libgconf-2-4 \
+#     libfontconfig1 \
+#     xvfb \
+#     libgomp1 \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Set environment variables for Chrome/Chromium
+# ENV CHROME_BIN=/usr/bin/chromium
+# ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+# ENV DISPLAY=:99
+
+# # Set environment variables for Flask and Gunicorn
+# ENV PYTHONUNBUFFERED=1
+# ENV PORT 8080
+# ENV FLASK_APP=main.py
+# ENV FLASK_ENV=production
+
+# # Copy the current directory contents into the container at /app
+# COPY . /app
+
+# # Install any needed packages specified in requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# # Install Gunicorn for production
+# RUN pip install gunicorn
+
+# # Expose port 8080
+# EXPOSE 8080
+
+# # Create a wrapper script to start Xvfb and Gunicorn
+# RUN echo '#!/bin/bash\nXvfb :99 -screen 0 1024x768x16 &\nexec gunicorn --bind 0.0.0.0:8080 main:app' > /app/start.sh
+# RUN chmod +x /app/start.sh
+
+# # Run the application using the wrapper script
+# CMD ["/app/start.sh"]
+
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory in the container
 WORKDIR /app
 
-# Install Chrome and dependencies
+# Install system dependencies for Chrome/Chromium and other libraries
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -113,26 +206,32 @@ RUN apt-get update && apt-get install -y \
     libgconf-2-4 \
     libfontconfig1 \
     xvfb \
+    libgomp1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
+# Set environment variables for Chrome/Chromium
 ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 ENV DISPLAY=:99
 
-# Copy and install requirements
-COPY requirements.txt .
+# Set environment variables for Flask and Gunicorn
+ENV PYTHONUNBUFFERED=1
+ENV PORT 8080
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Install Gunicorn for production
+RUN pip install gunicorn
 
-# Create a wrapper script to start Xvfb and the application
-RUN echo '#!/bin/bash\nXvfb :99 -screen 0 1024x768x16 &\npython main.py' > /app/start.sh
-RUN chmod +x /app/start.sh
-
+# Expose port 8080
 EXPOSE 8080
 
-CMD ["/app/start.sh"]
+# Run the application using Gunicorn with increased timeout
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "900", "app:app"]
