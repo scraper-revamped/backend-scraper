@@ -22,40 +22,11 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--log-level=1")
-#driver = webdriver.Chrome(options=chrome_options)
-# # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
 
-# # driver.set_page_load_timeout(300)  # Increase the timeout for page load
-# # driver.set_script_timeout(300)
-
-
-# def setup_chrome_driver():
-#     chrome_options = Options()
-#     chrome_options.add_argument('--headless')
-#     chrome_options.add_argument('--no-sandbox')
-#     chrome_options.add_argument('--disable-dev-shm-usage')
-#     chrome_options.add_argument('--disable-gpu')
-#     chrome_options.add_argument('--disable-software-rasterizer')
-#     chrome_options.add_argument('--disable-extensions')
-#     chrome_options.add_argument('--single-process')
-#     chrome_options.add_argument('--remote-debugging-port=9222')
-#     chrome_options.add_argument('--window-size=1920x1080')
-#     chrome_options.binary_location = os.getenv('CHROME_BIN', '/usr/bin/chromium')
-
-#     service = webdriver.ChromeService(
-#         executable_path=os.getenv('CHROMEDRIVER_PATH')
-#     )
-    
-#     driver = webdriver.Chrome(service=service, options=chrome_options)
-#     driver.set_page_load_timeout(30)
-#     driver.implicitly_wait(10)
-    
-#     return driver
 
 def post_process_results(term_tenders):
-    logging.info("got etimad website successfully!!!")
+    logging.info("post processing results")
     if not term_tenders:
         print("No results found for the specified main activity.")
         return
@@ -170,15 +141,7 @@ def setup_search(main_activityy):
     # # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
     # # logging.info("Website loaded successfully")
     try:
-        # print("getting etimad website..")
-        # logging.info("getting website!!!")
-        # website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
-        # driver.get(website_url)
-        # print("got etimad website successfully!!!")
-        # logging.info("got etimad website successfully!!!")
-        # driver = setup_chrome_driver()
         logging.info("Driver initialized, navigating to website...")
-        
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         logging.info("got etimad website successfully!!!")
@@ -220,9 +183,7 @@ def setup_search(main_activityy):
         
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
-        raise
     finally:
-        if driver:
             driver.quit()
 
 # if __name__ == "__main__":
