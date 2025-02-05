@@ -227,4 +227,5 @@ COPY . .
 EXPOSE 8080
 
 # Use port 8080 for Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
+CMD ["python","schedule.py"]
+# CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
