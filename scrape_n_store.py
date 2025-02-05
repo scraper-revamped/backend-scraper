@@ -23,6 +23,8 @@ chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
+chrome_options.add_argument("--user-data-dir=C:\\Users\\YourUser\\AppData\\Local\\Google\\Chrome\\User Data")
 
 
 def post_process_results(term_tenders):
