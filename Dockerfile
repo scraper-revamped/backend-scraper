@@ -189,49 +189,42 @@
 # # Run the application using the wrapper script
 # CMD ["/app/start.sh"]
 
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+# 
 
-# Set the working directory in the container
+FROM python:3.11
+
 WORKDIR /app
 
-# Install system dependencies for Chrome/Chromium and other libraries
 RUN apt-get update && apt-get install -y \
     wget \
-    gnupg \
     unzip \
-    chromium \
-    chromium-driver \
     libnss3 \
-    libgconf-2-4 \
-    libfontconfig1 \
-    xvfb \
-    libgomp1 \
+    libxss1 \
+    libappindicator3-1 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for Chrome/Chromium
-ENV CHROME_BIN=/usr/bin/chromium
-ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
-ENV DISPLAY=:99
+# Add Google's official GPG key
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - 
 
-# Set environment variables for Flask and Gunicorn
-ENV PYTHONUNBUFFERED=1
-ENV PORT 8080
-ENV FLASK_APP=app.py
-ENV FLASK_ENV=production
+# Set up the Google repository
+RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Install Google Chrome
+RUN apt-get update && apt-get install -y google-chrome-stable
 
-# Install any needed packages specified in requirements.txt
+# Install Python dependencies (add your requirements.txt if you have one)
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Gunicorn for production
-RUN pip install gunicorn
+# Copy the application code into the container
+COPY . .
 
-# Expose port 8080
+# Expose the port the app runs on
 EXPOSE 8080
 
-# Run the application using Gunicorn with increased timeout
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "900", "app:app"]
+# Use port 8080 for Streamlit
+CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]

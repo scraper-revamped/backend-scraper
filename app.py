@@ -22,73 +22,45 @@
 # if __name__ == '__main__':
 #     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
 
+# from flask import Flask, jsonify
+# from scrape_n_store import setup_search  # Import your existing scraper function
+# import os
 
-# import streamlit as st
-# from scrape_n_store import setup_search
-# import logging
+# app = Flask(__name__)
 
-# # Configure logging
-# logging.basicConfig(level=logging.INFO)
+# @app.route("/", methods=["GET"])
+# def health_check():
+#     return jsonify({"status": "healthy"}), 200
 
-# def run_scraper():
-#     st.write("Scraper started.")
+# @app.route("/scrape", methods=["GET"])
+# def scrape():
 #     try:
-#         setup_search("الاتصالات وتقنية المعلومات")
-#         st.write("Scraping completed successfully.")
+#         # You can modify this to accept parameters via query string if needed
+#         main_activity = "الاتصالات وتقنية المعلومات"
+#         setup_search(main_activity)
+#         return jsonify({"status": "success", "message": "Scraping completed"}), 200
 #     except Exception as e:
-#         st.error(f"An error occurred: {str(e)}")
+#         return jsonify({"status": "error", "message": str(e)}), 500
 
-# # Streamlit UI
-# st.title("Web Scraping App")
-# st.write("This app scrapes tenders from the Etimad website.")
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 8080))
+#     app.run(host='0.0.0.0', port=port, debug=False)
+    # app.run(debug=True)
 
-# # Automatically run the scraper when the app is loaded
-# if __name__ == '__main__':
-#     run_scraper()
-
-# import streamlit as st
-# from scrape_n_store import setup_search
-# import logging
-
-# logging.basicConfig(level=logging.INFO)
-
-# def run_scraper():
-#     with st.spinner('Scraping in progress...'):
-#         try:
-#             setup_search("الاتصالات وتقنية المعلومات")
-#             st.success("Scraping completed successfully!")
-#         except Exception as e:
-#             st.error(f"An error occurred: {str(e)}")
-#             logging.error(f"Scraping error: {str(e)}", exc_info=True)
-
-# st.title("Web Scraping App")
-# st.write("This app scrapes tenders from the Etimad website.")
-
-# if __name__ == '__main__':
-#     run_scraper()
-
-
-from flask import Flask, jsonify
-from scrape_n_store import setup_search  # Import your existing scraper function
+import streamlit as st
+from scrape_n_store import setup_search
 import os
 
-app = Flask(__name__)
-
-@app.route("/", methods=["GET"])
-def health_check():
-    return jsonify({"status": "healthy"}), 200
-
-@app.route("/scrape", methods=["GET"])
-def scrape():
+def main():
+    st.title("Web Scraping App")
     try:
-        # You can modify this to accept parameters via query string if needed
-        main_activity = "الاتصالات وتقنية المعلومات"
-        setup_search(main_activity)
-        return jsonify({"status": "success", "message": "Scraping completed"}), 200
+        with st.spinner("Scraping in progress..."):
+            main_activity = "الاتصالات وتقنية المعلومات"
+            setup_search(main_activity)
+        st.success("Scraping completed successfully!")
+        
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
-    # app.run(debug=True)
+    main()
