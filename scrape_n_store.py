@@ -163,6 +163,8 @@ def start_parsing(term_tenders, driver):
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
+    driver.set_page_load_timeout(300)  # Set timeout for page loading
+    driver.set_script_timeout(300) 
     driver.maximize_window()
     # logging.info("Driver initialized, navigating to website...")
     # # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
@@ -177,8 +179,7 @@ def setup_search(main_activityy):
         # driver = setup_chrome_driver()
         logging.info("Driver initialized, navigating to website...")
         
-        website_url = "https://roya.tv/"
-        # https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1
+        website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         logging.info("got etimad website successfully!!!")
         
