@@ -1,12 +1,20 @@
-import requests
+from flask import Flask, jsonify
+import subprocess
 
-url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
-timeout_seconds = 60  # adjust as needed
+app = Flask(__name__)
 
-try:
-    response = requests.get(url, timeout=timeout_seconds)
-    print("Status Code:", response.status_code)
-    print("Response length:", len(response.text))
-except Exception as e:
-    print("Error:", e)
+@app.route("/test-curl")
+def test_curl():
+    try:
+        # Run a curl command to test connectivity
+        result = subprocess.check_output(
+            ["curl", "-I", "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"],
+            stderr=subprocess.STDOUT,
+            timeout=30
+        ).decode("utf-8")
+        return jsonify({"result": result})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=8080)
