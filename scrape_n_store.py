@@ -183,6 +183,7 @@ def setup_search(main_activityy):
         
     except Exception as e:
         print(f"An error occurred: {str(e)}")
+        logging.error(f"An error occurred: {str(e)}")
     finally:
         driver.quit()
 
