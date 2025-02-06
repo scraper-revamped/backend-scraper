@@ -24,6 +24,7 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
 chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
+chrome_options.page_load_strategy = 'none'
 
 
 def post_process_results(term_tenders):
@@ -138,6 +139,8 @@ def setup_search(main_activityy):
     logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
     driver.maximize_window()
+    driver.set_page_load_timeout(600)  # Timeout in seconds (adjust as needed)
+
     try:
         print("getting etimad website..")
         logging.info("Driver initialized, navigating to website...")
