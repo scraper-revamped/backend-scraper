@@ -20,7 +20,7 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
 # chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
-chrome_options.page_load_strategy = 'none'
+# chrome_options.page_load_strategy = 'none'
 
 
 def post_process_results(term_tenders):
