@@ -135,18 +135,18 @@ def start_parsing(term_tenders, driver):
     return
 
 def setup_search(main_activityy):
-    # Each request gets its own WebDriver instance
     logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
+    driver.set_page_load_timeout(300)  # Set timeout for page loading
+    driver.set_script_timeout(300) 
     driver.maximize_window()
-    driver.set_page_load_timeout(600)  # Timeout in seconds (adjust as needed)
-
+    # logging.info("Driver initialized, navigating to website...")
+    # # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
+    # # logging.info("Website loaded successfully")
     try:
-        print("getting etimad website..")
         logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
-        print("got etimad website successfully!!!")
         logging.info("got etimad website successfully!!!")
         
         # expand search
@@ -155,12 +155,12 @@ def setup_search(main_activityy):
 
         driver.execute_script("window.scrollBy(0, 500);")
         time.sleep(4)
-        status_button = driver.find_element(By.XPATH,"//*[@id='basicInfo']/div/div[2]/div/div/button")                        
+        status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")                        
         status_button.click()
 
         driver.execute_script("window.scrollBy(0, 50);")
         time.sleep(4)
-        span_element = driver.find_element(By.XPATH,'//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')                                                                     
+        span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')                                                                 
         span_element.click()
 
         driver.execute_script("window.scrollBy(0, 175);")
@@ -185,66 +185,9 @@ def setup_search(main_activityy):
         start_parsing(term_tenders, driver)
         
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
         logging.error(f"An error occurred: {str(e)}")
     finally:
-        driver.quit()
-
-
-# def setup_search(main_activityy):
-#     logging.info("Starting the scraper...")
-#     driver = webdriver.Chrome(options=chrome_options)
-#     driver.set_page_load_timeout(300)  # Set timeout for page loading
-#     driver.set_script_timeout(300) 
-#     driver.maximize_window()
-#     # logging.info("Driver initialized, navigating to website...")
-#     # # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
-#     # # logging.info("Website loaded successfully")
-#     try:
-#         logging.info("Driver initialized, navigating to website...")
-#         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
-#         driver.get(website_url)
-#         logging.info("got etimad website successfully!!!")
-        
-#         # expand search
-#         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
-#         search_button.click()
-
-#         driver.execute_script("window.scrollBy(0, 500);")
-#         time.sleep(4)
-#         status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")                        
-#         status_button.click()
-
-#         driver.execute_script("window.scrollBy(0, 50);")
-#         time.sleep(4)
-#         span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')                                                                 
-#         span_element.click()
-
-#         driver.execute_script("window.scrollBy(0, 175);")
-#         time.sleep(4)
-#         main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
-#         main_activity.click()
-
-#         input_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/div/div/input')
-#         input_element.clear()
-#         input_element.send_keys(str(main_activityy))
-
-#         option_xpath = f"//li[contains(., '{main_activityy}')]"
-#         selected_option_element = driver.find_element(By.XPATH, option_xpath)
-#         selected_option_element.click()
-
-#         driver.execute_script("window.scrollBy(0, 50);")
-#         final_search_button = driver.find_element(By.XPATH, '//*[@id="searchBtn"]') 
-#         final_search_button.click()
-#         time.sleep(4)
-
-# #         term_tenders = []
-#         start_parsing(term_tenders, driver)
-        
-#     except Exception as e:
-#         logging.error(f"An error occurred: {str(e)}")
-#     finally:
-#             driver.quit()
+            driver.quit()
 
 # if __name__ == "__main__":
 #     setup_search("الاتصالات وتقنية المعلومات")
