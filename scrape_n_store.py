@@ -135,13 +135,16 @@ def start_parsing(term_tenders, driver):
 
 def setup_search(main_activityy):
     # Each request gets its own WebDriver instance
+    logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
     driver.maximize_window()
     try:
         print("getting etimad website..")
+        logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         print("got etimad website successfully!!!")
+        logging.info("got etimad website successfully!!!")
         
         # expand search
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
