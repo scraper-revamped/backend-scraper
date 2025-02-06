@@ -10,11 +10,7 @@ import time
 from save_to_bucket import save_to_storage
 import logging
 
-
-
-
 logging.basicConfig(level=logging.INFO)
-
 
 # chrome_options = ChromeOptions()
 chrome_options = webdriver.ChromeOptions()
@@ -23,7 +19,7 @@ chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
-chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
+# chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
 chrome_options.page_load_strategy = 'none'
 
 
@@ -137,18 +133,15 @@ def start_parsing(term_tenders, driver):
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
-    driver.set_page_load_timeout(300)  # Set timeout for page loading
-    driver.set_script_timeout(300) 
+    # driver.set_page_load_timeout(300)  # Set timeout for page loading
+    # driver.set_script_timeout(300) 
     driver.maximize_window()
-    # logging.info("Driver initialized, navigating to website...")
-    # # driver.get("https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1")
-    # # logging.info("Website loaded successfully")
     try:
         logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         logging.info("got etimad website successfully!!!")
-        
+        time.sleep(30)
         # expand search
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
         search_button.click()
