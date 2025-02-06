@@ -198,6 +198,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
+    jq \
     libnss3 \
     libxss1 \
     libappindicator3-1 \
@@ -215,6 +216,17 @@ RUN echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >
 
 # Install Google Chrome
 RUN apt-get update && apt-get install -y google-chrome-stable
+# Install ChromeDriver from Chrome for Testing for Chrome version 133.0.6943.53
+# Download the ChromeDriver for Chrome version 133.0.6943.53 (Linux 64-bit)
+RUN wget -q --continue -P /tmp "https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.53/linux64/chromedriver-linux64.zip" && \
+    unzip /tmp/chromedriver-linux64.zip -d /usr/local/bin/ && \
+    mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
+    rm -rf /usr/local/bin/chromedriver-linux64 && \
+    rm /tmp/chromedriver-linux64.zip && \
+    chmod +x /usr/local/bin/chromedriver
+
+
+
 
 # Install Python dependencies (add your requirements.txt if you have one)
 COPY requirements.txt ./
