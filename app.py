@@ -50,17 +50,22 @@
 import streamlit as st
 from scrape_n_store import setup_search
 import os
+import logging
 
+logging.basicConfig(level=logging.INFO)
 def main():
     st.title("Web Scraping App")
     try:
+        logging.info("Starting scraping process in streamlit...")
         with st.spinner("Scraping in progress..."):
             main_activity = "الاتصالات وتقنية المعلومات"
             setup_search(main_activity)
         st.success("Scraping completed successfully!")
+        logging.info("Scraping completed successfully!")
         
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
+        logging.error(f"Error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()
