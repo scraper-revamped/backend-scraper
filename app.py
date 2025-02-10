@@ -54,5 +54,5 @@ def scrape():
         return render_template('index.html', message=f"An error occurred: {str(e)}", error=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)
  
