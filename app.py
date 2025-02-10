@@ -23,7 +23,7 @@
 #     main()
 
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 import os
 import logging
 from scrape_n_store import setup_search
@@ -34,18 +34,16 @@ app = Flask(__name__)
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
-
-@app.route('/scrape', methods=['POST'])
-def scrape():
     try:
         logging.info("Starting scraping process in Flask...")
+
+        # Automatically start scraping when the user visits the page
         main_activity = "الاتصالات وتقنية المعلومات"
         setup_search(main_activity)
-        
-        # Render success message in the template
+
+        # Logging and render the success message on the page
         logging.info("Scraping completed successfully!")
         return render_template('index.html', message="Scraping completed successfully!", error=False)
     
@@ -54,5 +52,5 @@ def scrape():
         return render_template('index.html', message=f"An error occurred: {str(e)}", error=True)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=False)
- 
+    # Set the host to 0.0.0.0 and port to 8080
+    app.run(host='0.0.0.0', port=8080, debug=True)
