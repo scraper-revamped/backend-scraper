@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraping App</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Web Scraping App</h1>
+        
+        <!-- Form to start the scraping process -->
+        <form method="post" action="{{ url_for('scrape') }}">
+            <button type="submit" class="btn btn-primary mt-3">Start Scraping</button>
+        </form>
+        
+        <!-- Message display section -->
+        {% if message %}
+            <div class="alert {{ 'alert-success' if not error else 'alert-danger' }} mt-4">
+                {{ message }}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS (Optional, for enhancements like alerts etc.) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
