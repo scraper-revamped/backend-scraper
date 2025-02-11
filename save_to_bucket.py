@@ -37,7 +37,7 @@ def save_to_storage(df, term, username):
         df.to_excel(file_name, index=False)
         logging.info(f"File saved locally: {file_name}")
 
-        bucket_name = "tenders-excel-files"
+        bucket_name = "scraping_revamped"
         logging.info(f"deleting file ....: {term}/{file_name}")
         delete_existing_files(bucket_name)
         logging.info(f"file deleted ....: {term}/{file_name}")
