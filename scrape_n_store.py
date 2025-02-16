@@ -55,6 +55,9 @@ def post_process_results(term_tenders):
     df['proposal_deadline'] = df['proposal_deadline'].str.replace('آخر موعد لتقديم العروض', '')
     df['proposal_start_date'] = df['proposal_start_date'].str.replace('تاريخ ووقت فتح العروض', '')
 
+    #removing dupes
+    df.drop_duplicates(subset='link', keep='first', inplace=True)
+
     # Save to GCS bucket
     save_to_storage(df, "الاتصالات_وتقنية_المعلومات", "default")
     return df
