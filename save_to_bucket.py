@@ -15,7 +15,10 @@ def delete_existing_files(bucket_name):
         # List and delete all blobs in the bucket
         blobs = bucket.list_blobs()
         for blob in blobs:
-                if blob.name.startswith('scraping_revamped/الاتصالات_وتقنية_المعلومات/'):
+                print("#############################")
+                print(f"in blob: {blob.name}")
+                print("#############################")
+                if blob.name.startswith('الاتصالات_وتقنية_المعلومات/tenders_الاتصالات_وتقنية_المعلومات'):
                     print(f"Deleting file: {blob.name}")
                     logging.info(f"Deleting file: {blob.name}")
                     blob.delete()
