@@ -9,3 +9,5 @@ google-cloud-secret-manager
 streamlit
 python-dotenv
 webdriver-manager
+requests
+beautifulsoup4

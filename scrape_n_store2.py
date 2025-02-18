@@ -11,7 +11,7 @@ from save_to_bucket import save_to_storage
 import logging
 from bs4 import BeautifulSoup
 import requests
-import time
+
 
 logging.basicConfig(level=logging.INFO)
 
