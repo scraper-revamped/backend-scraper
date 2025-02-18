@@ -129,6 +129,7 @@ def start_parsing(term_tenders, driver):
         print("No pagination found, either no tenders or a single page for the main activity.")
         get_tenders_from_page(term_tenders, driver)  
         if term_tenders:  
+            extract_purpose_from_url(term_tenders)
             post_process_results(term_tenders)
         else:
             print("No tenders found for the main activity.")
@@ -166,7 +167,7 @@ def start_parsing(term_tenders, driver):
 
     if term_tenders:  
         extract_purpose_from_url(term_tenders)
-        post_process_results(term_tenders)
+        post_process_results(term_tenders)  
     else:
         print("No tenders found for the main activity.")
 
