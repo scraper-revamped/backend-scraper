@@ -9,8 +9,9 @@ from xpath import *
 import time
 from save_to_bucket import save_to_storage
 import logging
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 import requests
+import bs4
 
 
 logging.basicConfig(level=logging.INFO)
@@ -75,7 +76,7 @@ def extract_purpose_from_url(term_tenders):
             response.raise_for_status()  # Raise an error for bad responses (4xx, 5xx)
 
             # Parse the HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = bs4.BeautifulSoup(response.text, 'html.parser')
             # Locate the "الغرض من المنافسة" section
             purpose_section = soup.find('div', class_='col-4', string=lambda text: text and 'الغرض من المنافسة' in text)
 
