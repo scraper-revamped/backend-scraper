@@ -58,9 +58,12 @@ def post_process_results(term_tenders):
     df['questions_deadline'] = df['questions_deadline'].str.replace('اخر موعد لإستلام الاستفسارات', '')
     df['proposal_deadline'] = df['proposal_deadline'].str.replace('آخر موعد لتقديم العروض', '')
     df['proposal_start_date'] = df['proposal_start_date'].str.replace('تاريخ ووقت فتح العروض', '')
-
+    df["purpose"] = df["purpose"].str.replace("...عرض الأقل...", "", regex=False)
     #removing dupes
     df.drop_duplicates(subset='link', keep='first', inplace=True)   
+    # Create a new column combining "subject" and "purpose"
+    df["subject_purpose"] = df["subject"] + " " + df["purpose"]
+
 
     # Save to GCS bucket
     save_to_storage(df, "الاتصالات_وتقنية_المعلومات", "default")
