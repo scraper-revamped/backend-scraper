@@ -191,7 +191,7 @@ def setup_search(main_activityy):
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         logging.info("got etimad website successfully!!!")
-        time.sleep(180)
+        time.sleep(300)
         # expand search
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
         search_button.click()
