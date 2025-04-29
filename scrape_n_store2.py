@@ -106,7 +106,7 @@ def extract_purpose_from_url(term_tenders):
 
 def get_tenders_from_page(term_tenders, driver):
     logging.info("get tenders from page")
-    parent_tender_divs = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[1]') #entire tenders 
+    parent_tender_divs = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[2]') #entire tenders 
     child_tender_divs = parent_tender_divs.find_elements(By.CLASS_NAME, "row") #each tender one by one 
     links = parent_tender_divs.find_elements(By.XPATH, "//a[contains(text(), 'التفاصيل')]") #### links for detailssss 
     links_arr = [el.get_property("href") for el in links] # links for all tafaseel 
@@ -128,7 +128,8 @@ def start_parsing(term_tenders, driver):
     logging.info("started parsing")
     current_page = 1
     try:
-        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[2]/div/nav/ul') #number of pages tab bottom of page
+        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul') #number of pages tab bottom of page
+        print("******* pages elements: ", pages_elements,"   ********")
     except Exception as e:
         print("No pagination found, either no tenders or a single page for the main activity.")
         get_tenders_from_page(term_tenders, driver)  
@@ -136,10 +137,11 @@ def start_parsing(term_tenders, driver):
             extract_purpose_from_url(term_tenders)
             post_process_results(term_tenders)
         else:
-            print("No tenders found for the main activity.")
+            print("No tenders found for the main activity1.")
         return
 
     pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
+    print ("********* pages *******", pages)
     pages_passed = {0}
     print("Parsing results for the main activity.")
 
@@ -150,19 +152,20 @@ def start_parsing(term_tenders, driver):
         print("Pages detected", pages)
         
         if current_page in pages:
-            pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[2]/div/nav/ul')
+            pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
             buttons = pages_elements.find_elements(By.TAG_NAME, 'a')
             
             for button in buttons:
                 if int(button.text) == current_page:
                     print(button.text)
                     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                    time.sleep(4)
+                    time.sleep(15)
                     button.click()
                     print(current_page, " clicked")
-                    time.sleep(4)
-                    pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[2]/div/nav/ul')
+                    time.sleep(5)
+                    pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
                     pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
+                    print ("********* pages *******", pages)
         
         get_tenders_from_page(term_tenders, driver)
         pages = set(pages) - pages_passed
@@ -173,7 +176,7 @@ def start_parsing(term_tenders, driver):
         extract_purpose_from_url(term_tenders)
         post_process_results(term_tenders)  
     else:
-        print("No tenders found for the main activity.")
+        print("No tenders found for the main activity2.")
 
     return
 
