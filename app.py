@@ -26,8 +26,8 @@
 from flask import Flask, render_template, request
 import os
 import logging
-from scrape_n_store2 import setup_search
-
+# from scrape_n_store2 import setup_search
+from scrape_n_store_tst import setup_search
 # Initialize Flask app
 app = Flask(__name__)
 

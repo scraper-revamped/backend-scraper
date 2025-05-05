@@ -124,16 +124,15 @@ def get_tenders_from_page(term_tenders, driver):
             el.insert(-3, "N/A")            
         i += 1
         
-def start_parsing(term_tenders, driver):
+def start_parsing(term_tenders, driver, max_retries=3):
     logging.info("started parsing")
     current_page = 1
     try:
-        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul') #number of pages tab bottom of page
-        # print("******* pages elements: ", pages_elements,"   ********")
-    except Exception as e:
+        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
+    except Exception:
         print("No pagination found, either no tenders or a single page for the main activity.")
-        get_tenders_from_page(term_tenders, driver)  
-        if term_tenders:  
+        get_tenders_from_page(term_tenders, driver)
+        if term_tenders:
             extract_purpose_from_url(term_tenders)
             post_process_results(term_tenders)
         else:
@@ -141,45 +140,59 @@ def start_parsing(term_tenders, driver):
         return
 
     pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
-    print ("@@@@@@ pages @@@@@@", pages)
     pages_passed = {0}
     print("Parsing results for the main activity.")
 
     while len(pages) > 0:
-        time.sleep(15)
+        time.sleep(3)
         print("Current page: ", current_page)
         pages_passed.add(current_page)
-        print('--')
-        print("Pages detected", pages)
-        
+
         if current_page in pages:
-            pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
-            buttons = pages_elements.find_elements(By.TAG_NAME, 'a')
-            # print ("buttons : ", buttons.text)
-            for button in buttons:
-                if int(button.text) == current_page:
-                    print("button to press: ",button.text)
-                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                    time.sleep(15)
-                    button.click()
-                    print(current_page, " clicked")
-                    time.sleep(5)
+            success = False
+            retries = 0
+            while not success and retries < max_retries:
+                try:
                     pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
-                    pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
-                    print ("********* pages *******", pages)
-        
+                    buttons = pages_elements.find_elements(By.TAG_NAME, 'a')
+                    for button in buttons:
+                        if button.text.isdigit() and int(button.text) == current_page:
+                            print(f"Trying to click page {current_page}, attempt {retries + 1}")
+                            driver.execute_script("arguments[0].scrollIntoView(true);", button)
+                            time.sleep(2)
+                            button.click()
+                            time.sleep(5)  # wait for page to load
+
+                            # confirm page changed (you can customize this logic)
+                            new_pages_element = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
+                            new_buttons = new_pages_element.find_elements(By.TAG_NAME, 'a')
+                            if any(btn.text.isdigit() and int(btn.text) == current_page for btn in new_buttons):
+                                success = True
+                                print(f"Page {current_page} loaded successfully.")
+                            break
+                except Exception as e:
+                    print(f"Retry {retries + 1} failed: {e}")
+                retries += 1
+
+            if not success:
+                print(f"Failed to load page {current_page} after {max_retries} retries.")
+                current_page += 1
+                continue
+
         get_tenders_from_page(term_tenders, driver)
+
+        # Refresh pagination
+        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
+        pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
         pages = set(pages) - pages_passed
-        print("pages: ", pages)
+
         current_page += 1
 
-    if term_tenders:  
+    if term_tenders:
         extract_purpose_from_url(term_tenders)
-        post_process_results(term_tenders)  
+        post_process_results(term_tenders)
     else:
         print("No tenders found for the main activity2.")
-
-    return
 
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
