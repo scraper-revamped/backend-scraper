@@ -25,9 +25,9 @@ chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
-tmp_profile = str(Path(tempfile.mkdtemp()).resolve())
-arg = f'--user-data-dir="{tmp_profile}"'
-chrome_options.add_argument(arg)
+# tmp_profile = str(Path(tempfile.mkdtemp()).resolve())
+# arg = f'--user-data-dir="{tmp_profile}"'
+# chrome_options.add_argument(arg)
 # chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
 chrome_options.page_load_strategy = 'none'
 
