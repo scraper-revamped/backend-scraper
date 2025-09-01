@@ -48,7 +48,7 @@ def index():
         return render_template('index.html', message="Scraping completed successfully!", error=False)
     
     except Exception as e:
-        logging.error(f"Error occurred: {str(e)}")
+        logging.error(f"Error occurred in app.py: {str(e)}")
         return render_template('index.html', message=f"An error occurred: {str(e)}", error=True)
 
 if __name__ == '__main__':
