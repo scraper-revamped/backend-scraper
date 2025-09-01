@@ -19,7 +19,7 @@ import shutil
 
 logging.basicConfig(level=logging.INFO)
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--headless")
+# chrome_options.add_argument("--headless")
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
@@ -206,7 +206,7 @@ def setup_search(main_activityy):
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         logging.info("got etimad website successfully!!!")
-        time.sleep(180)
+        time.sleep(20)
         # expand search
         logging.info("pressing search button")
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
@@ -214,16 +214,16 @@ def setup_search(main_activityy):
         search_button.click()
         logging.info("search button OK!!")
 
-        driver.execute_script("window.scrollBy(0, 500);")
+        driver.execute_script("window.scrollBy(0, 400);")
         time.sleep(10)
         logging.info("pressing حالة المنافسة")
         status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")  
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", status_button)                      
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", status_button)                      
         status_button.click()
         logging.info("حالة المنافسة OK!!")
 
 
-        # driver.execute_script("window.scrollBy(0, 50);")
+        driver.execute_script("window.scrollBy(0, 50);")
         time.sleep(4)
         span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", span_element)                                                                 
