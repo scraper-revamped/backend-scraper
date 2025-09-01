@@ -201,8 +201,8 @@ def start_parsing(term_tenders, driver, max_retries=3):
 
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
-    user_data_dir = tempfile.mkdtemp()  # unique temp directory per session
-    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+    # user_data_dir = tempfile.mkdtemp()  # unique temp directory per session
+    # chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
     driver = webdriver.Chrome(options=chrome_options)
     # driver.set_page_load_timeout(300)  # Set timeout for page loading
     # driver.set_script_timeout(300) 
