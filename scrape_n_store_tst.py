@@ -18,16 +18,12 @@ import shutil
 
 
 logging.basicConfig(level=logging.INFO)
-# user_data_dir = None
-# user_data_dir = tempfile.mkdtemp()
-# chrome_options = ChromeOptions()
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
-# chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
 # chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
 chrome_options.page_load_strategy = 'none'
 
@@ -201,8 +197,6 @@ def start_parsing(term_tenders, driver, max_retries=3):
 
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
-    # user_data_dir = tempfile.mkdtemp()  # unique temp directory per session
-    # chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
     driver = webdriver.Chrome(options=chrome_options)
     # driver.set_page_load_timeout(300)  # Set timeout for page loading
     # driver.set_script_timeout(300) 
@@ -273,7 +267,6 @@ def setup_search(main_activityy):
     finally:
         # Guaranteed cleanup
         driver.quit()
-        shutil.rmtree(user_data_dir, ignore_errors=True)
         # if user_data_dir and os.path.exists(user_data_dir):
         #     shutil.rmtree(user_data_dir)
 
