@@ -210,7 +210,7 @@ def setup_search(main_activityy):
         # expand search
         logging.info("pressing search button")
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", search_button)
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", search_button)
         search_button.click()
         logging.info("search button OK!!")
 
