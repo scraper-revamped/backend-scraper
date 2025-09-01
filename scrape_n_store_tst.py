@@ -218,7 +218,7 @@ def setup_search(main_activityy):
         time.sleep(4)
         logging.info("pressing حالة المنافسة")
         status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")  
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", status_button)                      
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", status_button)                      
         status_button.click()
         logging.info("حالة المنافسة OK!!")
 
@@ -226,7 +226,7 @@ def setup_search(main_activityy):
         driver.execute_script("window.scrollBy(0, 50);")
         time.sleep(4)
         span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", span_element)                                                                 
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", span_element)                                                                 
         span_element.click()
 
         # time.sleep(4)
@@ -236,17 +236,17 @@ def setup_search(main_activityy):
         driver.execute_script("window.scrollBy(0, 175);")
         time.sleep(4)
         main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity) 
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity) 
         main_activity.click()
 
         input_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/div/div/input')
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element) 
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element) 
         input_element.clear()
         input_element.send_keys(str(main_activityy))
 
         option_xpath = f"//li[contains(., '{main_activityy}')]"
         selected_option_element = driver.find_element(By.XPATH, option_xpath)
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_option_element)
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_option_element)
         selected_option_element.click()
 
         # time.sleep(4)
@@ -255,7 +255,7 @@ def setup_search(main_activityy):
 
         driver.execute_script("window.scrollBy(0, 50);")
         final_search_button = driver.find_element(By.XPATH, '//*[@id="searchBtn"]') 
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", final_search_button)
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", final_search_button)
         final_search_button.click()
         time.sleep(4)
 
