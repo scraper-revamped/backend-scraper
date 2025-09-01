@@ -267,11 +267,10 @@ def setup_search(main_activityy):
         start_parsing(term_tenders, driver)
         
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
+        logging.error(f"An error occurred in scrape_store: {str(e)}")
     finally:
         # Guaranteed cleanup
-        if driver:
-            driver.quit()
+        driver.quit()
         # if user_data_dir and os.path.exists(user_data_dir):
         #     shutil.rmtree(user_data_dir)
 
