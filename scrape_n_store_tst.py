@@ -223,7 +223,7 @@ def setup_search(main_activityy):
         logging.info("حالة المنافسة OK!!")
 
 
-        driver.execute_script("window.scrollBy(0, 100);")#was 50
+        driver.execute_script("window.scrollBy(0, 150);")#was 100
         time.sleep(10)
         span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", span_element)                                                                 
