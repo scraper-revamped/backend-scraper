@@ -225,9 +225,11 @@ def setup_search(main_activityy):
 
         driver.execute_script("window.scrollBy(0, 150);")#was 100
         time.sleep(10)
+        logging.info("pressing حالة المنافسة")
         span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", span_element)                                                                 
         span_element.click()
+        logging.info("OK حالة المنافسة!!")
 
         # time.sleep(4)
         # status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")                        
@@ -235,28 +237,36 @@ def setup_search(main_activityy):
 
         driver.execute_script("window.scrollBy(0, 175);")
         time.sleep(10)
+        logging.info("pressing النشاط الاساسي")
         main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity) 
         main_activity.click()
+        logging.info("OK !! النشاط الاساسي")
 
+
+        logging.info("Inputting الاتصالات و تقنية المعلومات")
         input_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/div/div/input')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element) 
         input_element.clear()
         input_element.send_keys(str(main_activityy))
+        
 
         option_xpath = f"//li[contains(., '{main_activityy}')]"
         selected_option_element = driver.find_element(By.XPATH, option_xpath)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_option_element)
         selected_option_element.click()
+        logging.info("OK!! الاتصالات و تقنية المعلومات")
 
         # time.sleep(4)
         # main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
         # main_activity.click()
 
         # driver.execute_script("window.scrollBy(0, 50);")
+        logging.info("pressing البحث")
         final_search_button = driver.find_element(By.XPATH, '//*[@id="searchBtn"]') 
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", final_search_button)
         final_search_button.click()
+        logging.info("OK!! البحث")
         time.sleep(4)
 
         term_tenders = []
