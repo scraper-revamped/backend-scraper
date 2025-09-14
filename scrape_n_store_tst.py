@@ -235,7 +235,7 @@ def setup_search(main_activityy):
         # status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")                        
         # status_button.click()
 
-        driver.execute_script("window.scrollBy(0, 175);")
+        driver.execute_script("window.scrollBy(0, 225);")#was 175
         time.sleep(10)
         logging.info("pressing النشاط الاساسي")
         main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
