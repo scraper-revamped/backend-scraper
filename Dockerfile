@@ -78,8 +78,8 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-key
 # Install Google Chrome
 RUN apt-get update && apt-get install -y google-chrome-stable
 
-# Install ChromeDriver (version matching the installed Chrome)
-RUN wget -q --continue -P /tmp "https://storage.googleapis.com/chrome-for-testing-public/139.0.7258.154/linux64/chromedriver-linux64.zip" && \
+# Install ChromeDriver (version matching the installed Chrome)139.0.7258.154
+RUN wget -q --continue -P /tmp "https://storage.googleapis.com/chrome-for-testing-public/140.0.7339.127/linux64/chromedriver-linux64.zip" && \
     unzip /tmp/chromedriver-linux64.zip -d /usr/local/bin/ && \
     mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
     rm -rf /usr/local/bin/chromedriver-linux64 && \
