@@ -225,21 +225,21 @@ def setup_search(main_activityy):
 
         driver.execute_script("window.scrollBy(0, 150);")#was 100
         time.sleep(10)
-        logging.info("pressing حالة المنافسة")
+        logging.info("pressing المنافسات النشطة")
         span_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[2]/div/div/div/ul/li[2]/a')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", span_element)                                                                 
         span_element.click()
-        logging.info("OK حالة المنافسة!!")
+        logging.info("OK المنافسات النشطة!!")
 
         # time.sleep(4)
         # status_button = driver.find_element(By.XPATH, "//*[@id='basicInfo']/div/div[2]/div/div/button")                        
         # status_button.click()
 
-        driver.execute_script("window.scrollBy(0, 225);")#was 175
+        driver.execute_script("window.scrollBy(0, 150);")#was 175
         time.sleep(10)
         logging.info("pressing النشاط الاساسي")
         main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
-        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity) 
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity)
         main_activity.click()
         logging.info("OK !! النشاط الاساسي")
 
