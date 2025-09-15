@@ -265,7 +265,9 @@ def setup_search(main_activityy):
         logging.info("pressing البحث")
         final_search_button = driver.find_element(By.XPATH, '//*[@id="searchBtn"]') 
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", final_search_button)
-        final_search_button.click()
+        time.sleep(3)
+        # final_search_button.click()
+        driver.execute_script("arguments[0].click();", final_search_button)
         logging.info("OK!! البحث")
         time.sleep(4)
 
