@@ -239,7 +239,7 @@ def setup_search(main_activityy):
         time.sleep(10)
         logging.info("pressing النشاط الاساسي")
         main_activity = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/button')
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity) 
+        # driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_activity) 
         main_activity.click()
         logging.info("OK !! النشاط الاساسي")
 
