@@ -21,12 +21,26 @@ import shutil
 
 logging.basicConfig(level=logging.INFO)
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+# Use the "new" headless mode - the legacy --headless sends a "HeadlessChrome"
+# user-agent and a fingerprint the Etimad WAF now rejects (it blocks the AJAX
+# lookup XHRs, leaving the activity dropdown empty -> search returns no data).
+chrome_options.add_argument("--headless=new")
+# Keep the UA aligned with the actual browser major version. The container's
+# Chrome auto-updates (currently ~150); a stale UA (was Chrome/91) mismatches the
+# Client Hints Chrome sends and is a classic bot signal. Bump this when Chrome
+# jumps a major version. See UA_MAJOR below.
+UA_MAJOR = "150"
+chrome_options.add_argument(
+    f"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    f"(KHTML, like Gecko) Chrome/{UA_MAJOR}.0.0.0 Safari/537.36")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
-# chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
+chrome_options.add_argument("--window-size=1920,1080")
+# Reduce automation fingerprint so the WAF stops rejecting the lookup XHRs.
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+chrome_options.add_experimental_option("useAutomationExtension", False)
 chrome_options.page_load_strategy = 'none'
 
 # --- Robust selectors -------------------------------------------------------
@@ -263,8 +277,17 @@ def setup_search(main_activityy):
     logging.info("Starting the scraper...")
     driver = webdriver.Chrome(options=chrome_options)
     # driver.set_page_load_timeout(300)  # Set timeout for page loading
-    # driver.set_script_timeout(300) 
+    # driver.set_script_timeout(300)
     driver.maximize_window()
+    # Hide the automation flag (navigator.webdriver) before any page script runs.
+    # This is part of getting the WAF to stop rejecting the lookup XHRs.
+    try:
+        driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"},
+        )
+    except Exception as e:
+        logging.warning("could not apply webdriver stealth patch: %s", e)
     try:
         logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
@@ -307,6 +330,23 @@ def setup_search(main_activityy):
         main_activity.click()
         logging.info("OK !! النشاط الاساسي")
 
+        # The activity dropdown is filled by an AJAX lookup (GetMainActivitiesAsync)
+        # that the WAF has been rejecting - when it fails the list is empty, the
+        # selection silently no-ops, and the search returns "no data". Wait for
+        # real options to appear; if they never load, fail loudly with a snapshot
+        # instead of running a filterless search.
+        def _activities_loaded(d):
+            opts = d.find_elements(By.CSS_SELECTOR, "#activitiesList option")
+            return any((o.get_attribute("value") or "").strip() not in ("", "0") for o in opts)
+        try:
+            WebDriverWait(driver, 60).until(_activities_loaded)
+            logging.info("activity lookup populated OK")
+        except TimeoutException:
+            logging.error("activity dropdown never populated - lookup likely blocked by WAF")
+            save_debug_snapshot(driver, "activity_lookup_empty")
+            raise NoTendersError(
+                "Main-activity dropdown never populated (GetMainActivitiesAsync "
+                "likely rejected by the WAF); cannot apply the IT filter.")
 
         logging.info("Inputting الاتصالات و تقنية المعلومات")
         input_element = driver.find_element(By.XPATH, '//*[@id="basicInfo"]/div/div[4]/div/div/div/div/input')
