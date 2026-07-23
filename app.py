@@ -49,7 +49,9 @@ def index():
     
     except Exception as e:
         logging.error(f"Error occurred in app.py: {str(e)}")
-        return render_template('index.html', message=f"An error occurred: {str(e)}", error=True)
+        # Return HTTP 500 so Cloud Run / uptime monitoring can detect the failed
+        # run, instead of a silent 200 that looks healthy while emails go out empty.
+        return render_template('index.html', message=f"An error occurred: {str(e)}", error=True), 500
 
 if __name__ == '__main__':
     # Set the host to 0.0.0.0 and port to 8080

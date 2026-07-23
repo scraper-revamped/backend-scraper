@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 import pandas as pd
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import os
 from xpath import *
 #from utils_consts import *
@@ -26,6 +27,62 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--log-level=1")
 # chrome_options.add_argument("--disable-blink-features=AutomationControlled")  
 chrome_options.page_load_strategy = 'none'
+
+# --- Robust selectors -------------------------------------------------------
+# Results and pagination are injected into #cardsresult by the site's front-end
+# bundle (bundle.js + vue-app/pagination.js). The pagination <ul> is rendered by
+# a Vue template ONLY when there is more than one page (v-if="totalPages > 1"),
+# with class "pagination". Selecting by class/id instead of positional div[N]
+# indices makes the scraper resilient to front-end layout/version changes.
+RESULTS_CONTAINER_ID = "cardsresult"
+PAGINATION_UL_CSS = "#cardsresult ul.pagination"
+TENDER_ROW_LABELS = ("الرقم المرجعي", "تاريخ النشر")
+NO_RESULTS_MARKERS = ("لا توجد بيانات", "لا توجد نتائج")
+DEBUG_BUCKET = "scraping_revamped_4"
+
+
+class NoTendersError(RuntimeError):
+    """Raised when a scrape run completes but extracts zero tenders, so callers
+    (and monitoring) can distinguish an empty run from a real success."""
+
+
+def wait_for_results(driver, timeout=120):
+    """Block until the AJAX-loaded tender cards are actually present in
+    #cardsresult, instead of relying on a fixed sleep. Returns True if tender
+    rows rendered, False if the site explicitly reported no results or timed out."""
+    logging.info("waiting for results to render (up to %ss)...", timeout)
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            text = driver.find_element(By.ID, RESULTS_CONTAINER_ID).text
+            if all(lbl in text for lbl in TENDER_ROW_LABELS):
+                logging.info("results rendered successfully")
+                return True
+            if any(marker in text for marker in NO_RESULTS_MARKERS):
+                logging.warning("site reported no results (placeholder shown)")
+                return False
+        except Exception as e:
+            logging.info("still waiting for results (%s)", e.__class__.__name__)
+        time.sleep(3)
+    logging.error("timed out after %ss waiting for results to render", timeout)
+    return False
+
+
+def save_debug_snapshot(driver, reason):
+    """Best-effort dump of the current page HTML + screenshot to GCS so a future
+    empty/failed run can be diagnosed from the actual rendered DOM. Never raises."""
+    try:
+        from google.cloud import storage
+        ts = time.strftime("%Y-%m-%dT%H-%M-%S")
+        prefix = f"debug/{ts}_{reason}"
+        bucket = storage.Client().bucket(DEBUG_BUCKET)
+        bucket.blob(prefix + ".html").upload_from_string(
+            driver.page_source, content_type="text/html; charset=utf-8")
+        bucket.blob(prefix + ".png").upload_from_string(
+            driver.get_screenshot_as_png(), content_type="image/png")
+        logging.info("saved debug snapshot to gs://%s/%s.[html|png]", DEBUG_BUCKET, prefix)
+    except Exception as e:
+        logging.error("failed to save debug snapshot: %s", e)
 
 
 def post_process_results(term_tenders):
@@ -107,8 +164,8 @@ def extract_purpose_from_url(term_tenders):
 
 def get_tenders_from_page(term_tenders, driver):
     logging.info("get tenders from page")
-    parent_tender_divs = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[2]') #entire tenders 
-    child_tender_divs = parent_tender_divs.find_elements(By.CLASS_NAME, "row") #each tender one by one 
+    parent_tender_divs = driver.find_element(By.ID, RESULTS_CONTAINER_ID) #entire tenders
+    child_tender_divs = parent_tender_divs.find_elements(By.CLASS_NAME, "row") #each tender one by one
     links = parent_tender_divs.find_elements(By.XPATH, "//a[contains(text(), 'التفاصيل')]") #### links for detailssss 
     links_arr = [el.get_property("href") for el in links] # links for all tafaseel 
 
@@ -129,8 +186,8 @@ def start_parsing(term_tenders, driver, max_retries=3):
     logging.info("started parsing")
     current_page = 1
     try:
-        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
-    except Exception:
+        pages_elements = driver.find_element(By.CSS_SELECTOR, PAGINATION_UL_CSS)
+    except NoSuchElementException:
         print("No pagination found, either no tenders or a single page for the main activity.")
         get_tenders_from_page(term_tenders, driver)
         if term_tenders:
@@ -154,7 +211,7 @@ def start_parsing(term_tenders, driver, max_retries=3):
             retries = 0
             while not success and retries < max_retries:
                 try:
-                    pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
+                    pages_elements = driver.find_element(By.CSS_SELECTOR, PAGINATION_UL_CSS)
                     buttons = pages_elements.find_elements(By.TAG_NAME, 'a')
                     for button in buttons:
                         if button.text.isdigit() and int(button.text) == current_page:
@@ -165,7 +222,7 @@ def start_parsing(term_tenders, driver, max_retries=3):
                             time.sleep(5)  # wait for page to load
 
                             # confirm page changed (you can customize this logic)
-                            new_pages_element = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
+                            new_pages_element = driver.find_element(By.CSS_SELECTOR, PAGINATION_UL_CSS)
                             new_buttons = new_pages_element.find_elements(By.TAG_NAME, 'a')
                             if any(btn.text.isdigit() and int(btn.text) == current_page for btn in new_buttons):
                                 success = True
@@ -183,7 +240,7 @@ def start_parsing(term_tenders, driver, max_retries=3):
         get_tenders_from_page(term_tenders, driver)
 
         # Refresh pagination
-        pages_elements = driver.find_element(By.XPATH, '//*[@id="cardsresult"]/div[3]/div/nav/ul')
+        pages_elements = driver.find_element(By.CSS_SELECTOR, PAGINATION_UL_CSS)
         pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
         pages = set(pages) - pages_passed
 
@@ -269,13 +326,28 @@ def setup_search(main_activityy):
         # final_search_button.click()
         driver.execute_script("arguments[0].click();", final_search_button)
         logging.info("OK!! البحث")
-        time.sleep(4)
+
+        # Wait for the AJAX-rendered result cards instead of a fixed sleep. If they
+        # never render, capture a snapshot and fail loudly rather than silently
+        # "succeeding" with an empty result (which is what caused the empty emails).
+        if not wait_for_results(driver, timeout=120):
+            save_debug_snapshot(driver, "no_results_after_search")
+            raise NoTendersError(
+                "Results did not render after search - possible site/front-end "
+                "change, slow load, or WAF block. See debug snapshot in GCS.")
 
         term_tenders = []
         start_parsing(term_tenders, driver)
-        
+
+        if not term_tenders:
+            save_debug_snapshot(driver, "zero_tenders_parsed")
+            raise NoTendersError(
+                "Search results rendered but zero tenders were parsed - the card "
+                "layout/labels may have changed. See debug snapshot in GCS.")
+
     except Exception as e:
         logging.error(f"An error occurred in scrape_store: {str(e)}")
+        raise  # propagate so app.py reports failure instead of a false success
     finally:
         # Guaranteed cleanup
         driver.quit()
