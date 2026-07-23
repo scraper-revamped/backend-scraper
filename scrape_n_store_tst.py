@@ -9,6 +9,7 @@ from xpath import *
 #from utils_consts import *
 import time
 from save_to_bucket import save_to_storage
+from alerting import send_failure_alert
 import logging
 # from bs4 import BeautifulSoup
 import requests
@@ -347,6 +348,23 @@ def setup_search(main_activityy):
 
     except Exception as e:
         logging.error(f"An error occurred in scrape_store: {str(e)}")
+        # Alert immediately on any failure/empty run so subscribers never get
+        # empty emails without us noticing. Best-effort; never masks the error.
+        png = None
+        try:
+            png = driver.get_screenshot_as_png()
+        except Exception:
+            pass
+        send_failure_alert(
+            subject=f"[Tender Scraper] Run FAILED for {main_activityy}",
+            body=(
+                "The tender scraper failed or returned no tenders.\n\n"
+                f"Activity: {main_activityy}\n"
+                f"Error: {e}\n\n"
+                f"Debug snapshot (if captured): gs://{DEBUG_BUCKET}/debug/\n"
+            ),
+            png_bytes=png,
+        )
         raise  # propagate so app.py reports failure instead of a false success
     finally:
         # Guaranteed cleanup
