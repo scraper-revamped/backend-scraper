@@ -240,10 +240,16 @@ def start_parsing(term_tenders, driver, max_retries=3):
 
         get_tenders_from_page(term_tenders, driver)
 
-        # Refresh pagination
-        pages_elements = driver.find_element(By.CSS_SELECTOR, PAGINATION_UL_CSS)
-        pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
-        pages = set(pages) - pages_passed
+        # Refresh pagination. If the <ul> is momentarily gone (single page left,
+        # or a Vue re-render), stop paging gracefully and keep what we collected
+        # instead of crashing the whole run and losing every scraped tender.
+        try:
+            pages_elements = driver.find_element(By.CSS_SELECTOR, PAGINATION_UL_CSS)
+            pages = [int(el) for el in pages_elements.text.split('\n') if el.isdigit()]
+            pages = set(pages) - pages_passed
+        except NoSuchElementException:
+            print("Pagination no longer present; finishing after current page.")
+            break
 
         current_page += 1
 
@@ -348,6 +354,9 @@ def setup_search(main_activityy):
 
     except Exception as e:
         logging.error(f"An error occurred in scrape_store: {str(e)}")
+        # Always capture the live DOM for ANY failure so it can be diagnosed from
+        # the actual page instead of guessing from the stack trace.
+        save_debug_snapshot(driver, "run_exception")
         # Alert immediately on any failure/empty run so subscribers never get
         # empty emails without us noticing. Best-effort; never masks the error.
         png = None
