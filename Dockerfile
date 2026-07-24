@@ -45,6 +45,9 @@ COPY . .
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=8080
+# undetected-chromedriver patches/writes a chromedriver at runtime; on Cloud Run
+# only /tmp is writable, so point HOME there.
+ENV HOME=/tmp
 
 # 8. Expose the port
 EXPOSE 8080

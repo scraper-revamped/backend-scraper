@@ -20,30 +20,28 @@ import shutil
 
 
 logging.basicConfig(level=logging.INFO)
-chrome_options = webdriver.ChromeOptions()
-# Run HEADFUL (no --headless) under Xvfb (see Dockerfile). The Etimad WAF (F5
-# BIG-IP ASM) was detecting headless Chrome and rejecting the AJAX lookup XHRs,
-# leaving the activity dropdown empty -> search returns no data. Headful Chrome
-# under a virtual display is much harder to fingerprint as automation.
-# NOTE: requires an X display; locally without Xvfb, set HEADLESS=1 to test.
-if os.getenv("HEADLESS") == "1":
-    chrome_options.add_argument("--headless=new")
-# Keep the UA aligned with the actual browser major version. The container's
-# Chrome auto-updates (currently ~150); a stale UA (was Chrome/91) mismatches the
-# Client Hints Chrome sends and is a classic bot signal. Bump this when Chrome
-# jumps a major version. See UA_MAJOR below.
-UA_MAJOR = "150"
-chrome_options.add_argument(
-    f"user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    f"(KHTML, like Gecko) Chrome/{UA_MAJOR}.0.0.0 Safari/537.36")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("--log-level=1")
-chrome_options.add_argument("--window-size=1920,1080")
-# Reduce automation fingerprint so the WAF stops rejecting the lookup XHRs.
-chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-chrome_options.page_load_strategy = 'none'
+import undetected_chromedriver as uc
+
+
+def build_driver():
+    """Build an undetected-chromedriver instance.
+
+    The Etimad WAF (F5 BIG-IP ASM) detects vanilla Selenium/headless Chrome and
+    rejects the AJAX lookup XHRs, leaving the activity dropdown empty. uc manages
+    a stealthed, HEADFUL Chrome (run under Xvfb; see Dockerfile) and handles the
+    CDP session cleanly - vanilla headful Chrome here failed execute_script with
+    "'Runtime.evaluate' wasn't found". Set HEADLESS=1 for local runs without a
+    display.
+    """
+    options = uc.ChromeOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920,1080")
+    options.page_load_strategy = 'none'
+    headless = os.getenv("HEADLESS") == "1"
+    # use_subprocess keeps the browser alive independent of the driver's own
+    # temp cleanup; uc auto-detects the installed Chrome major version.
+    return uc.Chrome(options=options, headless=headless, use_subprocess=True)
 
 # --- Robust selectors -------------------------------------------------------
 # Results and pagination are injected into #cardsresult by the site's front-end
@@ -277,14 +275,12 @@ def start_parsing(term_tenders, driver, max_retries=3):
 
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = build_driver()
     # driver.set_page_load_timeout(300)  # Set timeout for page loading
     # driver.set_script_timeout(300)
-    driver.maximize_window()
-    # navigator.webdriver is already hidden by --disable-blink-features=
-    # AutomationControlled. We deliberately avoid execute_cdp_cmd stealth patches
-    # here: mixing a persistent CDP script with execute_script corrupted the
-    # DevTools session and caused "'Runtime.evaluate' wasn't found" in headful.
+    # NOTE: no maximize_window() - there's no window manager under bare Xvfb;
+    # the --window-size flag sets the viewport instead. uc handles the stealth
+    # (navigator.webdriver etc.) so no manual CDP patching is needed.
     try:
         logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
