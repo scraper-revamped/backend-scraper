@@ -52,6 +52,9 @@ EXPOSE 8080
 # 9. Run the app under a virtual display so Chrome can run HEADFUL (not headless).
 # Headful Chrome is far harder for the Etimad WAF (F5 BIG-IP ASM) to detect than
 # headless, which it was rejecting - blocking the lookup XHRs and leaving the
-# activity filter empty. Xvfb provides the X display; flask (and the Chrome it
-# spawns per request) inherit DISPLAY from xvfb-run.
-CMD ["xvfb-run", "-a", "--server-args=-screen 0 1920x1080x24", "flask", "run"]
+# activity filter empty.
+# Start Xvfb in the BACKGROUND, then `exec flask` so Flask is the foreground
+# process and binds $PORT immediately (Cloud Run health-checks the port). Chrome
+# spawned per request inherits DISPLAY=:99. Wrapping flask in xvfb-run instead
+# prevented Flask from binding in time and failed the startup probe.
+CMD ["/bin/bash", "-c", "Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp & export DISPLAY=:99; exec flask run --host=0.0.0.0 --port=${PORT:-8080}"]
