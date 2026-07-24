@@ -21,10 +21,13 @@ import shutil
 
 logging.basicConfig(level=logging.INFO)
 chrome_options = webdriver.ChromeOptions()
-# Use the "new" headless mode - the legacy --headless sends a "HeadlessChrome"
-# user-agent and a fingerprint the Etimad WAF now rejects (it blocks the AJAX
-# lookup XHRs, leaving the activity dropdown empty -> search returns no data).
-chrome_options.add_argument("--headless=new")
+# Run HEADFUL (no --headless) under Xvfb (see Dockerfile). The Etimad WAF (F5
+# BIG-IP ASM) was detecting headless Chrome and rejecting the AJAX lookup XHRs,
+# leaving the activity dropdown empty -> search returns no data. Headful Chrome
+# under a virtual display is much harder to fingerprint as automation.
+# NOTE: requires an X display; locally without Xvfb, set HEADLESS=1 to test.
+if os.getenv("HEADLESS") == "1":
+    chrome_options.add_argument("--headless=new")
 # Keep the UA aligned with the actual browser major version. The container's
 # Chrome auto-updates (currently ~150); a stale UA (was Chrome/91) mismatches the
 # Client Hints Chrome sends and is a classic bot signal. Bump this when Chrome

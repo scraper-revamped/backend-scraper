@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     unzip \
+    xvfb \
     libnss3 \
     libxss1 \
     libappindicator3-1 \
@@ -48,5 +49,9 @@ ENV FLASK_RUN_PORT=8080
 # 8. Expose the port
 EXPOSE 8080
 
-# 9. Run the app
-CMD ["flask", "run"]
+# 9. Run the app under a virtual display so Chrome can run HEADFUL (not headless).
+# Headful Chrome is far harder for the Etimad WAF (F5 BIG-IP ASM) to detect than
+# headless, which it was rejecting - blocking the lookup XHRs and leaving the
+# activity filter empty. Xvfb provides the X display; flask (and the Chrome it
+# spawns per request) inherit DISPLAY from xvfb-run.
+CMD ["xvfb-run", "-a", "--server-args=-screen 0 1920x1080x24", "flask", "run"]
