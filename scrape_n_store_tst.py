@@ -43,7 +43,6 @@ chrome_options.add_argument("--window-size=1920,1080")
 # Reduce automation fingerprint so the WAF stops rejecting the lookup XHRs.
 chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-chrome_options.add_experimental_option("useAutomationExtension", False)
 chrome_options.page_load_strategy = 'none'
 
 # --- Robust selectors -------------------------------------------------------
@@ -282,15 +281,10 @@ def setup_search(main_activityy):
     # driver.set_page_load_timeout(300)  # Set timeout for page loading
     # driver.set_script_timeout(300)
     driver.maximize_window()
-    # Hide the automation flag (navigator.webdriver) before any page script runs.
-    # This is part of getting the WAF to stop rejecting the lookup XHRs.
-    try:
-        driver.execute_cdp_cmd(
-            "Page.addScriptToEvaluateOnNewDocument",
-            {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"},
-        )
-    except Exception as e:
-        logging.warning("could not apply webdriver stealth patch: %s", e)
+    # navigator.webdriver is already hidden by --disable-blink-features=
+    # AutomationControlled. We deliberately avoid execute_cdp_cmd stealth patches
+    # here: mixing a persistent CDP script with execute_script corrupted the
+    # DevTools session and caused "'Runtime.evaluate' wasn't found" in headful.
     try:
         logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
