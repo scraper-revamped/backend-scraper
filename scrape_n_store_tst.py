@@ -20,7 +20,26 @@ import shutil
 
 
 logging.basicConfig(level=logging.INFO)
+import subprocess
+import re as _re
 import undetected_chromedriver as uc
+
+
+def _installed_chrome_major():
+    """Detect the installed Chrome major version so uc fetches a matching driver.
+    uc otherwise guessed wrong (grabbed a Chrome 151 driver for Chrome 150)."""
+    for binary in ("google-chrome-stable", "google-chrome", "chromium", "chromium-browser"):
+        try:
+            out = subprocess.check_output([binary, "--version"], text=True)
+            m = _re.search(r"(\d+)\.", out)
+            if m:
+                major = int(m.group(1))
+                logging.info("detected Chrome %s via %s", major, binary)
+                return major
+        except Exception:
+            continue
+    logging.warning("could not detect installed Chrome version; letting uc guess")
+    return None
 
 
 def build_driver():
@@ -39,9 +58,15 @@ def build_driver():
     options.add_argument("--window-size=1920,1080")
     options.page_load_strategy = 'none'
     headless = os.getenv("HEADLESS") == "1"
-    # use_subprocess keeps the browser alive independent of the driver's own
-    # temp cleanup; uc auto-detects the installed Chrome major version.
-    return uc.Chrome(options=options, headless=headless, use_subprocess=True)
+    # Pin the driver to the installed Chrome major so uc downloads a matching
+    # ChromeDriver (it guessed 151 for a Chrome-150 image). use_subprocess keeps
+    # the browser alive independent of the driver's own temp cleanup.
+    return uc.Chrome(
+        options=options,
+        headless=headless,
+        use_subprocess=True,
+        version_main=_installed_chrome_major(),
+    )
 
 # --- Robust selectors -------------------------------------------------------
 # Results and pagination are injected into #cardsresult by the site's front-end
