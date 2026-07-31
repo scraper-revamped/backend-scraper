@@ -59,13 +59,15 @@ def build_driver():
     options.page_load_strategy = 'none'
     headless = os.getenv("HEADLESS") == "1"
     # Pin the driver to the installed Chrome major so uc downloads a matching
-    # ChromeDriver (it guessed 151 for a Chrome-150 image). use_subprocess keeps
-    # the browser alive independent of the driver's own temp cleanup.
+    # ChromeDriver (it guessed 151 for a Chrome-150 image). CHROME_MAJOR env
+    # overrides detection if needed. use_subprocess keeps the browser alive
+    # independent of the driver's own temp cleanup.
+    version_main = int(os.getenv("CHROME_MAJOR")) if os.getenv("CHROME_MAJOR") else _installed_chrome_major()
     return uc.Chrome(
         options=options,
         headless=headless,
         use_subprocess=True,
-        version_main=_installed_chrome_major(),
+        version_main=version_main,
     )
 
 # --- Robust selectors -------------------------------------------------------
@@ -163,7 +165,10 @@ def post_process_results(term_tenders):
     df["subject_purpose"] = df["subject"] + " " + df["purpose"]
 
 
-    # Save to GCS bucket
+    # Save to GCS bucket (skippable for local debugging without GCP credentials)
+    if os.getenv("SKIP_UPLOAD") == "1":
+        logging.info("SKIP_UPLOAD=1 set; skipping GCS upload. Parsed %d rows.", len(df))
+        return df
     save_to_storage(df, "الاتصالات_وتقنية_المعلومات", "default")
     return df
 
@@ -311,7 +316,11 @@ def setup_search(main_activityy):
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
         driver.get(website_url)
         logging.info("got etimad website successfully!!!")
-        time.sleep(180)
+        # Initial settle/lookup-load wait. Long in prod; override for local
+        # debugging with INITIAL_WAIT (e.g. INITIAL_WAIT=15).
+        initial_wait = int(os.getenv("INITIAL_WAIT", "180"))
+        logging.info("waiting %ss for page/lookups to settle...", initial_wait)
+        time.sleep(initial_wait)
         # expand search
         logging.info("pressing search button")
         search_button = driver.find_element(By.XPATH, "//*[@id='searchBtnColaps']")
