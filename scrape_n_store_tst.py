@@ -139,8 +139,10 @@ def post_process_results(term_tenders):
     df['proposal_deadline'] = df['proposal_deadline'].str.replace('آخر موعد لتقديم العروض', '')
     df['proposal_start_date'] = df['proposal_start_date'].str.replace('تاريخ ووقت فتح العروض', '')
     df["purpose"] = df["purpose"].str.replace("...عرض الأقل...", "", regex=False)
-    #removing dupes
-    df.drop_duplicates(subset='link', keep='first', inplace=True)   
+    #removing dupes - dedupe on reference_number (unique per tender). Using 'link'
+    # would wrongly collapse all link-less tenders (e.g. شراء مباشر) into one,
+    # since they now share an empty link.
+    df.drop_duplicates(subset='reference_number', keep='first', inplace=True)
     # Create a new column combining "subject" and "purpose"
     df["subject_purpose"] = df["subject"] + " " + df["purpose"]
 
@@ -156,6 +158,10 @@ def post_process_results(term_tenders):
 def extract_purpose_from_url(term_tenders):
     for tender in term_tenders:
         link = tender[-1]
+        if not link:
+            # Link-less tender (e.g. شراء مباشر) - no detail page to fetch.
+            tender.append("الغرض من المنافسة غير متوفر")
+            continue
         try:
             # Send a GET request to fetch the page content
             response = requests.get(link)
@@ -191,21 +197,24 @@ def get_tenders_from_page(term_tenders, driver):
     logging.info("get tenders from page")
     parent_tender_divs = driver.find_element(By.ID, RESULTS_CONTAINER_ID) #entire tenders
     child_tender_divs = parent_tender_divs.find_elements(By.CLASS_NAME, "row") #each tender one by one
-    links = parent_tender_divs.find_elements(By.XPATH, "//a[contains(text(), 'التفاصيل')]") #### links for detailssss 
-    links_arr = [el.get_property("href") for el in links] # links for all tafaseel 
 
     filtered_child_divs = []
     for div in child_tender_divs:
         if 'الرقم المرجعي' in div.text and 'تاريخ النشر' in div.text:
             filtered_child_divs.append(div)
-    i = 0
+
     for div in filtered_child_divs:
         el = div.text.split('\n')
-        el.append(links_arr[i])
+        # Grab THIS row's detail link with a relative './/a' (scoped to the row).
+        # Some tenders (e.g. شراء مباشر / direct purchase) have no "التفاصيل" link,
+        # so fall back to "". The old code used a document-wide '//a' list indexed
+        # by row position, which threw "list index out of range" as soon as a row
+        # had no link (more rows than links).
+        row_links = div.find_elements(By.XPATH, ".//a[contains(text(), 'التفاصيل')]")
+        el.append(row_links[0].get_property("href") if row_links else "")
         term_tenders.append(el)
         if 'تاريخ ووقت فتح العروض' not in div.text:
-            el.insert(-3, "N/A")            
-        i += 1
+            el.insert(-3, "N/A")
         
 def start_parsing(term_tenders, driver, max_retries=3):
     logging.info("started parsing")
