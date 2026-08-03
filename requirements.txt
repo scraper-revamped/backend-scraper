@@ -1,14 +1,10 @@
-selenium>=4.20.0
-undetected-chromedriver>=3.5.5
+selenium>=4.16.0
 pandas
-streamlit
-google-cloud-storage
-Flask
 numpy
 openpyxl
+Flask
+google-cloud-storage
 google-cloud-secret-manager
-streamlit
 python-dotenv
-webdriver-manager
 requests
 bs4

@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     unzip \
-    xvfb \
     libnss3 \
     libxss1 \
     libappindicator3-1 \
@@ -45,19 +44,9 @@ COPY . .
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=8080
-# undetected-chromedriver patches/writes a chromedriver at runtime; on Cloud Run
-# only /tmp is writable, so point HOME there.
-ENV HOME=/tmp
 
 # 8. Expose the port
 EXPOSE 8080
 
-# 9. Run the app under a virtual display so Chrome can run HEADFUL (not headless).
-# Headful Chrome is far harder for the Etimad WAF (F5 BIG-IP ASM) to detect than
-# headless, which it was rejecting - blocking the lookup XHRs and leaving the
-# activity filter empty.
-# Start Xvfb in the BACKGROUND, then `exec flask` so Flask is the foreground
-# process and binds $PORT immediately (Cloud Run health-checks the port). Chrome
-# spawned per request inherits DISPLAY=:99. Wrapping flask in xvfb-run instead
-# prevented Flask from binding in time and failed the startup probe.
-CMD ["/bin/bash", "-c", "Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp & export DISPLAY=:99; exec flask run --host=0.0.0.0 --port=${PORT:-8080}"]
+# 9. Run the app
+CMD ["flask", "run"]

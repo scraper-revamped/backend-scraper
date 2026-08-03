@@ -1,0 +1,13 @@
+# Local session cookies - NEVER commit (live F5/auth tokens)
+manual_cookies.txt
+
+# Local debug artifacts
+snapshot.txt
+debug_*.png
+debug_*.html
+logs.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/

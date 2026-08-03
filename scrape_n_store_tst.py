@@ -20,55 +20,35 @@ import shutil
 
 
 logging.basicConfig(level=logging.INFO)
-import subprocess
-import re as _re
-import undetected_chromedriver as uc
 
-
-def _installed_chrome_major():
-    """Detect the installed Chrome major version so uc fetches a matching driver.
-    uc otherwise guessed wrong (grabbed a Chrome 151 driver for Chrome 150)."""
-    for binary in ("google-chrome-stable", "google-chrome", "chromium", "chromium-browser"):
-        try:
-            out = subprocess.check_output([binary, "--version"], text=True)
-            m = _re.search(r"(\d+)\.", out)
-            if m:
-                major = int(m.group(1))
-                logging.info("detected Chrome %s via %s", major, binary)
-                return major
-        except Exception:
-            continue
-    logging.warning("could not detect installed Chrome version; letting uc guess")
-    return None
+# Keep the UA aligned with a current Chrome major - a stale UA (the code once
+# pinned Chrome/91) mismatches the Client Hints Chrome actually sends and reads
+# as a bot signal. Bump this when Chrome jumps a major version.
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36")
 
 
 def build_driver():
-    """Build an undetected-chromedriver instance.
+    """Build a headless Chrome WebDriver.
 
-    The Etimad WAF (F5 BIG-IP ASM) detects vanilla Selenium/headless Chrome and
-    rejects the AJAX lookup XHRs, leaving the activity dropdown empty. uc manages
-    a stealthed, HEADFUL Chrome (run under Xvfb; see Dockerfile) and handles the
-    CDP session cleanly - vanilla headful Chrome here failed execute_script with
-    "'Runtime.evaluate' wasn't found". Set HEADLESS=1 for local runs without a
-    display.
+    Selenium Manager auto-provisions a matching ChromeDriver for the installed
+    Chrome, so no driver binary is bundled. Runs headless by default; set the
+    env var HEADLESS=0 to launch a VISIBLE browser for local debugging.
     """
-    options = uc.ChromeOptions()
+    options = webdriver.ChromeOptions()
+    if os.getenv("HEADLESS") != "0":
+        options.add_argument("--headless=new")
+    options.add_argument(f"user-agent={USER_AGENT}")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
+    options.add_argument("--log-level=1")
+    # Light automation-fingerprint reduction (harmless if the WAF isn't blocking).
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.page_load_strategy = 'none'
-    headless = os.getenv("HEADLESS") == "1"
-    # Pin the driver to the installed Chrome major so uc downloads a matching
-    # ChromeDriver (it guessed 151 for a Chrome-150 image). CHROME_MAJOR env
-    # overrides detection if needed. use_subprocess keeps the browser alive
-    # independent of the driver's own temp cleanup.
-    version_main = int(os.getenv("CHROME_MAJOR")) if os.getenv("CHROME_MAJOR") else _installed_chrome_major()
-    return uc.Chrome(
-        options=options,
-        headless=headless,
-        use_subprocess=True,
-        version_main=version_main,
-    )
+    return webdriver.Chrome(options=options)
 
 # --- Robust selectors -------------------------------------------------------
 # Results and pagination are injected into #cardsresult by the site's front-end
@@ -306,11 +286,8 @@ def start_parsing(term_tenders, driver, max_retries=3):
 def setup_search(main_activityy):
     logging.info("Starting the scraper...")
     driver = build_driver()
-    # driver.set_page_load_timeout(300)  # Set timeout for page loading
-    # driver.set_script_timeout(300)
-    # NOTE: no maximize_window() - there's no window manager under bare Xvfb;
-    # the --window-size flag sets the viewport instead. uc handles the stealth
-    # (navigator.webdriver etc.) so no manual CDP patching is needed.
+    # Viewport is set via the --window-size flag (headless has no window manager
+    # to maximize).
     try:
         logging.info("Driver initialized, navigating to website...")
         website_url = "https://tenders.etimad.sa/Tender/AllTendersForVisitor?PageNumber=1"
