@@ -200,7 +200,13 @@ def get_tenders_from_page(term_tenders, driver):
 
     filtered_child_divs = []
     for div in child_tender_divs:
-        if 'الرقم المرجعي' in div.text and 'تاريخ النشر' in div.text:
+        text = div.text
+        # A single tender card contains the reference-number label exactly ONCE.
+        # find_elements(CLASS_NAME,"row") also matches an outer WRAPPER .row that
+        # holds every card - its text contains the labels many times and would
+        # become one giant row (e.g. 80 columns -> "Length mismatch"). Requiring
+        # exactly one reference number keeps only individual tender cards.
+        if text.count('الرقم المرجعي') == 1 and 'تاريخ النشر' in text:
             filtered_child_divs.append(div)
 
     for div in filtered_child_divs:
