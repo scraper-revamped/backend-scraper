@@ -6,31 +6,48 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+TENDERS_PREFIX = "الاتصالات_وتقنية_المعلومات/"
+
+
 def delete_existing_files(bucket_name):
+    """Delete the previous tenders spreadsheet(s) so only the latest remains.
+    Scans only the tenders folder (prefix), not the whole bucket."""
     try:
-        logging.info(f"Attempting to delete files in bucket: {bucket_name}")
-        """Delete all files in the specified GCS bucket."""
         client = storage.Client()
         bucket = client.bucket(bucket_name)
-        # List and delete all blobs in the bucket
-        blobs = bucket.list_blobs()
-        for blob in blobs:
-                print("#############################")
-                print(f"in blob: {blob.name}")
-                print("#############################")
-                if blob.name.startswith('الاتصالات_وتقنية_المعلومات/tenders_الاتصالات_وتقنية_المعلومات'):
-                    print(f"Deleting file: {blob.name}")
-                    logging.info(f"Deleting file: {blob.name}")
-                    blob.delete()
+        deleted = 0
+        for blob in bucket.list_blobs(prefix=TENDERS_PREFIX):
+            if blob.name.startswith(TENDERS_PREFIX + "tenders_"):
+                blob.delete()
+                deleted += 1
+        logging.info("Deleted %d previous tender file(s) under %s", deleted, TENDERS_PREFIX)
     except Exception as e:
         logging.error(f"Error deleting files: {e}")
+
+
+def prune_debug_snapshots(bucket_name="scraping_revamped_4", prefix="debug/", retention_days=14):
+    """Delete debug snapshot blobs older than retention_days so debug/ doesn't
+    grow forever. Best-effort; never raises."""
+    try:
+        from datetime import datetime, timezone, timedelta
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        deleted = 0
+        for blob in bucket.list_blobs(prefix=prefix):
+            if blob.time_created and blob.time_created < cutoff:
+                blob.delete()
+                deleted += 1
+        if deleted:
+            logging.info("Pruned %d debug snapshot(s) older than %d days", deleted, retention_days)
+    except Exception as e:
+        logging.error("Error pruning debug snapshots: %s", e)
 
 def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(source_file_name)
-    print(f"Uploaded {source_file_name} to {destination_blob_name}")
     logging.info(f"Uploaded {source_file_name} to {destination_blob_name}")
 
 def save_to_storage(df, term, username):

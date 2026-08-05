@@ -8,7 +8,7 @@ import os
 from xpath import *
 #from utils_consts import *
 import time
-from save_to_bucket import save_to_storage
+from save_to_bucket import save_to_storage, prune_debug_snapshots
 from alerting import send_failure_alert
 import logging
 # from bs4 import BeautifulSoup
@@ -103,6 +103,8 @@ def save_debug_snapshot(driver, reason):
         bucket.blob(prefix + ".png").upload_from_string(
             driver.get_screenshot_as_png(), content_type="image/png")
         logging.info("saved debug snapshot to gs://%s/%s.[html|png]", DEBUG_BUCKET, prefix)
+        # Trim old snapshots so the debug/ folder doesn't grow forever.
+        prune_debug_snapshots(DEBUG_BUCKET)
     except Exception as e:
         logging.error("failed to save debug snapshot: %s", e)
 
