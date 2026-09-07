@@ -157,41 +157,116 @@ def post_process_results(term_tenders):
     return df
 
 
-def extract_purpose_from_url(term_tenders):
-    for tender in term_tenders:
-        link = tender[-1]
-        if not link:
-            # Link-less tender (e.g. شراء مباشر) - no detail page to fetch.
-            tender.append("الغرض من المنافسة غير متوفر")
-            continue
+# --- Detail-page ("purpose") fetching ------------------------------------------
+PURPOSE_UNAVAILABLE = "الغرض من المنافسة غير متوفر"
+DETAIL_URL_MARKER = "/Tender/DetailsForVisitor"
+
+# Etimad's WAF rejects requests that don't look like a browser. A bare
+# requests.get() sends "User-Agent: python-requests/x.y" and gets a 403 on every
+# detail page - which is exactly what silently poisoned the "purpose" column from
+# 2026-09-04 onward (every row became "Error processing <url>: 403 Client Error").
+# Sending the same Chrome headers the Selenium session uses gets a normal 200.
+DETAIL_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": ("text/html,application/xhtml+xml,application/xml;q=0.9,"
+               "image/avif,image/webp,*/*;q=0.8"),
+    "Accept-Language": "ar,en-US;q=0.9,en;q=0.8",
+    "Referer": "https://tenders.etimad.sa/Tender/AllTendersForVisitor",
+    "Upgrade-Insecure-Requests": "1",
+}
+PURPOSE_TIMEOUT = 45
+PURPOSE_RETRIES = 3
+PURPOSE_DELAY = 0.5
+# If more than this share of detail fetches fail, treat the run as broken rather
+# than uploading a spreadsheet whose purpose column is mostly placeholders (the
+# downstream email function fuzzy-matches on "purpose", so a poisoned column
+# means subscribers get wrong or empty matches).
+PURPOSE_FAILURE_THRESHOLD = 0.5
+
+
+def _parse_purpose(html):
+    """Pull the الغرض من المنافسة value out of a tender detail page."""
+    soup = bs4.BeautifulSoup(html, 'html.parser')
+    purpose_section = soup.find(
+        'div', class_='col-4',
+        string=lambda text: text and 'الغرض من المنافسة' in text)
+    if not purpose_section:
+        return None
+    purpose_info = purpose_section.find_next_sibling('div', class_='col-8 etd-item-info')
+    if not purpose_info:
+        return None
+    # The full text lives in a hidden #purposeSpan; the visible node is truncated.
+    purpose_span = purpose_info.find('span', id='purposeSpan')
+    if purpose_span and purpose_span.has_attr('hidden'):
+        return purpose_span.get_text(strip=True)
+    return purpose_info.get_text(strip=True)
+
+
+def _fetch_purpose(session, link):
+    """Fetch one detail page and return (purpose_text, failed).
+
+    `failed` marks a *fetch/transport* failure (403, timeout, ...) as opposed to
+    a page that simply has no purpose section. Errors are never written into the
+    returned text - a previous version put the exception string in the purpose
+    column, which silently corrupted the dataset and the downstream keyword
+    matching instead of surfacing the outage.
+    """
+    last_error = None
+    for attempt in range(1, PURPOSE_RETRIES + 1):
         try:
-            # Send a GET request to fetch the page content
-            response = requests.get(link)
-            response.raise_for_status()  # Raise an error for bad responses (4xx, 5xx)
-
-            # Parse the HTML
-            soup = bs4.BeautifulSoup(response.text, 'html.parser')
-            # Locate the "الغرض من المنافسة" section
-            purpose_section = soup.find('div', class_='col-4', string=lambda text: text and 'الغرض من المنافسة' in text)
-
-            if purpose_section:
-                # Find the corresponding information in the next column
-                purpose_info = purpose_section.find_next_sibling('div', class_='col-8 etd-item-info')
-
-                # Check if the expanded content is available
-                purpose_span = purpose_info.find('span', id='purposeSpan')
-                if purpose_span and purpose_span.has_attr('hidden'):
-                    extracted_text = purpose_span.get_text(strip=True)
-                else:
-                    extracted_text = purpose_info.get_text(strip=True)
-            else:
-                extracted_text = "الغرض من المنافسة غير متوفر"
-
+            response = session.get(link, timeout=PURPOSE_TIMEOUT)
+            response.raise_for_status()
+            purpose = _parse_purpose(response.text)
+            if purpose is None:
+                logging.warning("no purpose section on detail page: %s", link)
+                return PURPOSE_UNAVAILABLE, False
+            return purpose, False
         except Exception as e:
-            extracted_text = f"Error processing {link}: {e}"
-        
-        # Append the extracted text to the tender list
-        tender.append(extracted_text)
+            last_error = e
+            if attempt < PURPOSE_RETRIES:
+                time.sleep(2 ** attempt)
+    logging.error("purpose fetch failed after %d attempts (%s): %s",
+                  PURPOSE_RETRIES, last_error, link)
+    return PURPOSE_UNAVAILABLE, True
+
+
+def extract_purpose_from_url(term_tenders):
+    """Append each tender's "purpose" (from its detail page) to its row."""
+    attempted = 0
+    failed = 0
+    session = requests.Session()
+    session.headers.update(DETAIL_HEADERS)
+    try:
+        for tender in term_tenders:
+            link = tender[-1]
+            if not link:
+                # Link-less tender (e.g. شراء مباشر) - no detail page to fetch.
+                tender.append(PURPOSE_UNAVAILABLE)
+                continue
+            if DETAIL_URL_MARKER not in link:
+                # Not a tender detail page (a pagination/search URL captured by an
+                # older link-selection bug). Fetching it returns the results page,
+                # which has no purpose section - skip it instead of wasting a
+                # request and writing a misleading value.
+                logging.warning("skipping non-detail link: %s", link[:120])
+                tender.append(PURPOSE_UNAVAILABLE)
+                continue
+
+            attempted += 1
+            purpose, fetch_failed = _fetch_purpose(session, link)
+            failed += fetch_failed
+            tender.append(purpose)
+            time.sleep(PURPOSE_DELAY)  # be polite; avoid tripping WAF rate limits
+    finally:
+        session.close()
+
+    if attempted:
+        logging.info("purpose fetch: %d/%d detail pages failed", failed, attempted)
+        if failed / attempted > PURPOSE_FAILURE_THRESHOLD:
+            raise NoTendersError(
+                f"{failed} of {attempted} tender detail pages could not be "
+                "fetched (likely a WAF block on the detail requests); refusing "
+                "to upload a spreadsheet with a mostly-empty purpose column.")
 
     return term_tenders
 
